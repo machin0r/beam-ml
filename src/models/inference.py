@@ -4,6 +4,7 @@ Inference module for LPBF density prediction
 
 import mlflow
 import pandas as pd
+import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from functools import lru_cache
@@ -23,34 +24,52 @@ logger = get_logger(__name__)
 @lru_cache(maxsize=1)
 def load_production_model():
     """
-    Load the production model from MLflow Model Registry
+    Load the production model from MLflow Model Registry or exported directory
 
     Uses LRU cache to load model only once per process.
+
+    The loading method is controlled by the MODEL_PATH environment variable:
+    - If MODEL_PATH is set: Load from that directory (Docker)
+    - If not set: Load from MLflow registry (local development)
 
     Returns:
         Loaded MLflow model
     """
-    logger.info("Loading production model from MLflow...")
+    # Check if we should load from exported model (Docker) or registry (local dev)
+    model_path = os.getenv("MODEL_PATH")
 
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    if model_path:
+        # Production mode: Load from exported model directory
+        logger.info(f"Loading model from exported path: {model_path}")
+        try:
+            model = mlflow.pyfunc.load_model(model_path)
+            logger.info("Production model loaded successfully from export")
+            return model
+        except Exception as e:
+            logger.error(f"Failed to load model from {model_path}: {e}")
+            raise RuntimeError(f"Could not load model from {model_path}: {e}")
+    else:
+        # Development mode: Load from MLflow registry
+        logger.info("Loading production model from MLflow registry...")
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
-    try:
-        # Load model tagged as "Production"
-        model_uri = "models:/lpbf_density_predictor/Production"
-        model = mlflow.pyfunc.load_model(model_uri)
+        try:
+            # Load model tagged as "Production"
+            model_uri = "models:/lpbf_density_predictor/Production"
+            model = mlflow.pyfunc.load_model(model_uri)
 
-        logger.info(f"Production model loaded successfully")
-        logger.info(f"  Model URI: {model_uri}")
+            logger.info(f"Production model loaded successfully")
+            logger.info(f"  Model URI: {model_uri}")
 
-        return model
+            return model
 
-    except Exception as e:
-        logger.error(f"Failed to load production model: {e}")
-        raise RuntimeError(
-            f"Could not load production model. "
-            f"Ensure a model is registered and promoted to Production stage. "
-            f"Error: {e}"
-        )
+        except Exception as e:
+            logger.error(f"Failed to load production model: {e}")
+            raise RuntimeError(
+                f"Could not load production model. "
+                f"Ensure a model is registered and promoted to Production stage. "
+                f"Error: {e}"
+            )
 
 
 @lru_cache(maxsize=1)
@@ -236,31 +255,59 @@ def get_model_info() -> Dict:
         model = load_production_model()
         schema = load_schema()
 
-        # Get model version info from MLflow
-        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-        client = mlflow.tracking.MlflowClient()
+        model_path = os.getenv("MODEL_PATH")
 
-        versions = client.get_latest_versions(
-            "lpbf_density_predictor", stages=["Production"]
-        )
+        if model_path:
+            # Production mode: Read metadata from exported model
+            import json
 
-        if versions:
-            version_info = versions[0]
-            info = {
-                "model_name": "lpbf_density_predictor",
-                "version": version_info.version,
-                "stage": version_info.current_stage,
-                "description": version_info.description,
-                "n_features": schema["n_features"],
-                "numeric_features": len(schema["numeric_features"]),
-                "categorical_features": len(schema["categorical_features"]),
-            }
+            metadata_path = Path(model_path).parent / "metadata.json"
+            if metadata_path.exists():
+                with open(metadata_path, "r") as f:
+                    metadata = json.load(f)
+
+                info = {
+                    "model_name": metadata.get("model_name", "lpbf_density_predictor"),
+                    "version": metadata.get("version", "unknown"),
+                    "stage": "Production",
+                    "run_id": metadata.get("run_id", "unknown"),
+                    "n_features": metadata.get("n_features", schema["n_features"]),
+                    "numeric_features": metadata.get("n_numeric", len(schema["numeric_features"])),
+                    "categorical_features": metadata.get("n_categorical", len(schema["categorical_features"])),
+                }
+            else:
+                # Fallback if metadata not found
+                info = {
+                    "model_name": "lpbf_density_predictor",
+                    "stage": "Production",
+                    "n_features": schema["n_features"],
+                }
         else:
-            info = {
-                "model_name": "lpbf_density_predictor",
-                "stage": "Production",
-                "n_features": schema["n_features"],
-            }
+            # Development mode: Get model version info from MLflow registry
+            mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+            client = mlflow.tracking.MlflowClient()
+
+            versions = client.get_latest_versions(
+                "lpbf_density_predictor", stages=["Production"]
+            )
+
+            if versions:
+                version_info = versions[0]
+                info = {
+                    "model_name": "lpbf_density_predictor",
+                    "version": version_info.version,
+                    "stage": version_info.current_stage,
+                    "description": version_info.description,
+                    "n_features": schema["n_features"],
+                    "numeric_features": len(schema["numeric_features"]),
+                    "categorical_features": len(schema["categorical_features"]),
+                }
+            else:
+                info = {
+                    "model_name": "lpbf_density_predictor",
+                    "stage": "Production",
+                    "n_features": schema["n_features"],
+                }
 
         return info
 
