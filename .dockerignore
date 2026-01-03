@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Training artifacts
+data/raw/
+data/processed/
+mlruns/
+mlartifacts/
+reports/*
+!reports/feature_space_stats.json
+notebooks/
+*.ipynb
+
+# Scripts
+scripts/
+
+# Documentation (keep README.md for build metadata)
+docs/
+
+# Logs
+logs/
+*.log
+
+# Test files
+tests/
+.pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
