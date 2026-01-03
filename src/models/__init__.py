@@ -1,1 +1,1 @@
-"""Model training and prediction modules."""
+"""ML models for LPBF density prediction."""
