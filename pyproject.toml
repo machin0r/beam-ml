@@ -1,5 +1,5 @@
 [project]
-name = "lpbf-ml-system"
+name = "beam-ml"
 version = "0.1.0"
 description = "LPBF density prediction ML system"
 readme = "README.md"
