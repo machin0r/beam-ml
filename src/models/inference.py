@@ -261,7 +261,7 @@ def get_model_info() -> Dict:
             # Production mode: Read metadata from exported model
             import json
 
-            metadata_path = Path(model_path).parent / "metadata.json"
+            metadata_path = Path(model_path) / "metadata.json"
             if metadata_path.exists():
                 with open(metadata_path, "r") as f:
                     metadata = json.load(f)
@@ -272,8 +272,12 @@ def get_model_info() -> Dict:
                     "stage": "Production",
                     "run_id": metadata.get("run_id", "unknown"),
                     "n_features": metadata.get("n_features", schema["n_features"]),
-                    "numeric_features": metadata.get("n_numeric", len(schema["numeric_features"])),
-                    "categorical_features": metadata.get("n_categorical", len(schema["categorical_features"])),
+                    "numeric_features": metadata.get(
+                        "n_numeric", len(schema["numeric_features"])
+                    ),
+                    "categorical_features": metadata.get(
+                        "n_categorical", len(schema["categorical_features"])
+                    ),
                 }
             else:
                 # Fallback if metadata not found
