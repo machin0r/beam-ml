@@ -2,5 +2,8 @@
   "model_name": "lpbf_density_predictor",
   "version": 1,
   "run_id": "9da3128976f042de8a5d3df7a162dcb0",
-  "exported_at": "2026-01-03T12:01:46.126343"
+  "exported_at": "2026-01-04T00:49:17.783330",
+  "n_features": 73,
+  "n_numeric": 10,
+  "n_categorical": 4
 }
