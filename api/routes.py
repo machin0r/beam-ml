@@ -121,6 +121,18 @@ async def predict(
 
 
 @router.get(
+    "/printer-models",
+    response_model=List[str],
+    summary="List supported printer models",
+    description="Returns all valid printer_model values accepted by the API.",
+)
+async def printer_models() -> List[str]:
+    """Return the list of supported printer model names."""
+    from api.schemas import PrinterModel
+    return sorted(m.value for m in PrinterModel)
+
+
+@router.get(
     "/health",
     response_model=HealthResponse,
     summary="Health check",
