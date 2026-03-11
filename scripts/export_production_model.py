@@ -64,6 +64,10 @@ def export_production_model(
         schema_path = PROJECT_ROOT / "models" / "feature_schema.json"
         schema = load_feature_schema(schema_path)
 
+        # Fetch test RMSE from the run metrics
+        run_data = client.get_run(production_version.run_id).data
+        test_rmse = run_data.metrics.get("rmse")
+
         metadata = {
             "model_name": model_name,
             "version": production_version.version,
@@ -73,6 +77,10 @@ def export_production_model(
             "n_numeric": schema["n_numeric"],
             "n_categorical": schema["n_categorical"],
         }
+
+        if test_rmse is not None:
+            metadata["test_rmse"] = float(test_rmse)
+            logger.info(f"Test RMSE: {test_rmse:.4f}")
 
         metadata_path = export_dir / "metadata.json"
         with open(metadata_path, "w") as f:
