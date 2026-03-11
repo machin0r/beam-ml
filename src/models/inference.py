@@ -160,12 +160,44 @@ def predict_density(input_data: Dict[str, float]) -> Tuple[float, Dict]:
         # Make prediction
         prediction = model.predict(X)[0]
 
+        # Compute 80% prediction interval using stored RMSE (z=1.28 for 80% PI)
+        confidence_interval = None
+        model_path = os.getenv("MODEL_PATH")
+        rmse = None
+
+        if model_path:
+            import json as _json
+            metadata_path = Path(model_path) / "metadata.json"
+            if metadata_path.exists():
+                with open(metadata_path) as f:
+                    _meta = _json.load(f)
+                rmse = _meta.get("test_rmse")
+        else:
+            try:
+                mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+                _client = mlflow.tracking.MlflowClient()
+                _versions = _client.get_latest_versions(
+                    "lpbf_density_predictor", stages=["Production"]
+                )
+                if _versions:
+                    _run_data = _client.get_run(_versions[0].run_id).data
+                    rmse = _run_data.metrics.get("rmse")
+            except Exception:
+                pass
+
+        if rmse is not None:
+            lower = max(0.0, float(prediction) - 1.28 * rmse)
+            upper = min(100.0, float(prediction) + 1.28 * rmse)
+            confidence_interval = [round(lower, 2), round(upper, 2)]
+
         # Create metadata
         metadata = {
             "model_name": "lpbf_density_predictor",
             "model_stage": "Production",
             "n_features": len(X.columns),
             "material": input_data.get("Material", "Unknown"),
+            "confidence_interval": confidence_interval,
+            "confidence_level": 0.80 if confidence_interval is not None else None,
         }
 
         logger.info(f"Prediction: {prediction:.2f}% for {metadata['material']}")

@@ -28,6 +28,7 @@ jobs:
       timeout-minutes: 10
       env:
         MODEL_PATH: ${{ github.workspace }}/models/production
+        RECOMMENDER_MODEL_PATH: ${{ github.workspace }}/models/param_recommender
       run: |
         uv run pytest tests/ -v
 

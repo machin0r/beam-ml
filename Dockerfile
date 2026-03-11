@@ -42,12 +42,14 @@ COPY --from=builder /app/api /app/api
 # Copy model artifacts and feature statistics
 COPY models/feature_schema.json /app/models/feature_schema.json
 COPY models/production/ /app/models/production/
+COPY models/param_recommender/ /app/models/param_recommender/
 COPY reports/feature_space_stats.json /app/reports/feature_space_stats.json
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV MODEL_PATH=/app/models/production
+ENV RECOMMENDER_MODEL_PATH=/app/models/param_recommender
 
 # Create non-root user for security
 RUN useradd -m -u 1000 apiuser && \

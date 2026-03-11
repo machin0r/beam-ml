@@ -2,9 +2,48 @@
 Pydantic schemas for API request/response validation
 """
 
+import json
+from enum import Enum
+from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
+
+# ---------------------------------------------------------------------------
+# PrinterModel enum — derived from feature_schema.json at import time
+# ---------------------------------------------------------------------------
+
+def _load_printer_models() -> List[str]:
+    """Extract clean printer model names from feature_schema.json."""
+    schema_path = Path(__file__).parent.parent / "models" / "feature_schema.json"
+    with open(schema_path) as f:
+        schema = json.load(f)
+
+    seen: set[str] = set()
+    names: List[str] = []
+    prefix = "Printer Model_"
+    for col in schema["expected_columns"]:
+        if col.startswith(prefix):
+            raw = col[len(prefix):]
+            # Strip non-breaking spaces (\u00a0) and regular whitespace
+            clean = raw.replace("\u00a0", "").strip()
+            if clean and clean not in seen:
+                seen.add(clean)
+                names.append(clean)
+    return sorted(names)
+
+
+PrinterModel = Enum(  # type: ignore[misc]
+    "PrinterModel",
+    {name: name for name in _load_printer_models()},
+    type=str,
+)
+PrinterModel.__doc__ = "Supported LPBF printer models"
+
+
+# ---------------------------------------------------------------------------
+# Prediction schemas
+# ---------------------------------------------------------------------------
 
 class PredictionRequest(BaseModel):
     """Request schema for density prediction"""
@@ -97,7 +136,7 @@ class PredictionRequest(BaseModel):
         ...,
         description="Build atmosphere (e.g., Argon, Nitrogen)",
     )
-    printer_model: str = Field(
+    printer_model: PrinterModel = Field(
         ...,
         description="Printer model name",
         alias="printer_model",
@@ -139,6 +178,14 @@ class PredictionResponse(BaseModel):
     warnings: Optional[List[str]] = Field(
         default=None, description="Any warnings about the prediction"
     )
+    confidence_interval: Optional[List[float]] = Field(
+        default=None,
+        description="80% prediction interval [lower, upper] in percent",
+    )
+    confidence_level: Optional[float] = Field(
+        default=None,
+        description="Confidence level (0.80)",
+    )
 
     class Config:
         json_schema_extra = {
@@ -148,9 +195,77 @@ class PredictionResponse(BaseModel):
                 "material": "316L",
                 "model_version": "1",
                 "warnings": None,
+                "confidence_interval": [96.9, 100.0],
+                "confidence_level": 0.80,
             }
         }
 
+
+# ---------------------------------------------------------------------------
+# Parameter recommender schemas
+# ---------------------------------------------------------------------------
+
+class ParameterRecommendationRequest(BaseModel):
+    """Request schema for parameter recommendation"""
+
+    # Material properties
+    melting_point_k: float = Field(..., ge=273.0, le=4000.0, description="Melting point in Kelvin")
+    thermal_conductivity_w_mk: float = Field(..., ge=1.0, le=500.0, description="Thermal conductivity in W/mK")
+    density_g_cm3: float = Field(..., ge=1.0, le=25.0, description="Material density in g/cm³")
+    specific_heat_j_kgk: float = Field(..., ge=100.0, le=2000.0, description="Specific heat capacity in J/kgK")
+    d50_um: float = Field(..., ge=10.0, le=100.0, description="Powder particle size D50 in μm")
+
+    # Categorical
+    material: str = Field(..., description="Material name (e.g., 316L, AlSi10Mg)")
+    atmosphere: str = Field(..., description="Build atmosphere (e.g., Argon, Nitrogen)")
+    printer_model: PrinterModel = Field(..., description="Printer model name")
+
+    # Target
+    target_density_pct: float = Field(
+        ...,
+        ge=90.0,
+        le=100.0,
+        description="Target relative density in percent",
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "melting_point_k": 1673.0,
+                "thermal_conductivity_w_mk": 16.3,
+                "density_g_cm3": 7.99,
+                "specific_heat_j_kgk": 500.0,
+                "d50_um": 45.0,
+                "material": "316L",
+                "atmosphere": "Argon",
+                "printer_model": "EOS M290",
+                "target_density_pct": 99.0,
+            }
+        }
+
+
+class ParameterRange(BaseModel):
+    """Min/max range for a single process parameter"""
+
+    min: float
+    max: float
+
+
+class ParameterRecommendationResponse(BaseModel):
+    """Response schema for parameter recommendation"""
+
+    laser_power_w: ParameterRange
+    scan_speed_mm_s: ParameterRange
+    hatch_space_mm: ParameterRange
+    layer_thickness_mm: ParameterRange
+    target_density_pct: float
+    printer_model: str
+    material: str
+
+
+# ---------------------------------------------------------------------------
+# Shared schemas
+# ---------------------------------------------------------------------------
 
 class HealthResponse(BaseModel):
     """Response schema for health check"""

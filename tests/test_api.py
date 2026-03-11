@@ -37,6 +37,22 @@ def valid_prediction_request():
     }
 
 
+@pytest.fixture
+def valid_recommendation_request():
+    """Valid parameter recommendation request payload"""
+    return {
+        "melting_point_k": 1673.0,
+        "thermal_conductivity_w_mk": 16.3,
+        "density_g_cm3": 7.99,
+        "specific_heat_j_kgk": 500.0,
+        "d50_um": 45.0,
+        "material": "316L",
+        "atmosphere": "Argon",
+        "printer_model": "EOS M290",
+        "target_density_pct": 99.0,
+    }
+
+
 class TestRootEndpoint:
     """Test suite for root endpoint"""
 
@@ -118,6 +134,25 @@ class TestPredictionEndpoint:
         assert "material" in data
         assert "model_version" in data
 
+    def test_predict_confidence_interval_present(self, client, valid_prediction_request):
+        """Test prediction response includes confidence interval"""
+        response = client.post("/api/v1/predict", json=valid_prediction_request)
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "confidence_interval" in data
+        assert "confidence_level" in data
+
+        # If CI is present (RMSE available), validate structure
+        if data["confidence_interval"] is not None:
+            ci = data["confidence_interval"]
+            assert len(ci) == 2, "CI should have [lower, upper]"
+            assert ci[0] <= ci[1], "Lower bound should be <= upper bound"
+            assert 0 <= ci[0] <= 100, "Lower bound should be in [0, 100]"
+            assert 0 <= ci[1] <= 100, "Upper bound should be in [0, 100]"
+            assert data["confidence_level"] == 0.80
+
     def test_predict_density_in_range(self, client, valid_prediction_request):
         """Test prediction is in valid range"""
         response = client.post("/api/v1/predict", json=valid_prediction_request)
@@ -166,6 +201,15 @@ class TestPredictionEndpoint:
 
         assert response.status_code == 422
 
+    def test_predict_invalid_printer_model_returns_422(self, client, valid_prediction_request):
+        """Test prediction with invalid printer model enum value returns 422"""
+        invalid_request = valid_prediction_request.copy()
+        invalid_request["printer_model"] = "NonExistentPrinter9999"
+
+        response = client.post("/api/v1/predict", json=invalid_request)
+
+        assert response.status_code == 422
+
     def test_predict_different_materials(self, client, valid_prediction_request):
         """Test predictions for different materials"""
         # Test 316L (steel)
@@ -193,6 +237,78 @@ class TestPredictionEndpoint:
         assert (
             steel_density != aluminium_density
         ), "Different materials should produce different predictions"
+
+
+class TestParameterRecommenderEndpoint:
+    """Test suite for parameter recommender endpoint"""
+
+    def test_recommend_success(self, client, valid_recommendation_request):
+        """Test successful parameter recommendation"""
+        response = client.post(
+            "/api/v1/recommend-parameters", json=valid_recommendation_request
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert "laser_power_w" in data
+        assert "scan_speed_mm_s" in data
+        assert "hatch_space_mm" in data
+        assert "layer_thickness_mm" in data
+        assert "target_density_pct" in data
+        assert "printer_model" in data
+        assert "material" in data
+
+    def test_recommend_ranges_valid(self, client, valid_recommendation_request):
+        """Test that each recommended range has min <= max"""
+        response = client.post(
+            "/api/v1/recommend-parameters", json=valid_recommendation_request
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        for param in ["laser_power_w", "scan_speed_mm_s", "hatch_space_mm", "layer_thickness_mm"]:
+            param_range = data[param]
+            assert "min" in param_range and "max" in param_range, f"Missing min/max for {param}"
+            assert param_range["min"] <= param_range["max"], (
+                f"{param}: min ({param_range['min']}) should be <= max ({param_range['max']})"
+            )
+
+    def test_recommend_invalid_printer_model_returns_422(self, client, valid_recommendation_request):
+        """Test recommendation with invalid printer model returns 422"""
+        invalid_request = valid_recommendation_request.copy()
+        invalid_request["printer_model"] = "NotARealPrinter9999"
+
+        response = client.post(
+            "/api/v1/recommend-parameters", json=invalid_request
+        )
+
+        assert response.status_code == 422
+
+    def test_recommend_target_density_too_low_returns_422(self, client, valid_recommendation_request):
+        """Test recommendation with target density below 90% returns 422"""
+        invalid_request = valid_recommendation_request.copy()
+        invalid_request["target_density_pct"] = 50.0
+
+        response = client.post(
+            "/api/v1/recommend-parameters", json=invalid_request
+        )
+
+        assert response.status_code == 422
+
+    def test_recommend_metadata_matches_request(self, client, valid_recommendation_request):
+        """Test response metadata echoes the request"""
+        response = client.post(
+            "/api/v1/recommend-parameters", json=valid_recommendation_request
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["target_density_pct"] == valid_recommendation_request["target_density_pct"]
+        assert data["material"] == valid_recommendation_request["material"]
+        assert data["printer_model"] == valid_recommendation_request["printer_model"]
 
 
 class TestFeatureRangesEndpoint:
