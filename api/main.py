@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 import time
 
 from api.routes import router
-from api.dependencies import get_model, get_feature_schema, get_model_info
+from api.dependencies import get_model, get_feature_schema, get_model_info, get_recommender_models
 from src.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -42,6 +42,10 @@ async def lifespan(app: FastAPI):
             logger.info(f"Stage: {info.get('stage')}")
         else:
             logger.warning(f" Could not load model info: {info.get('error')}")
+
+        logger.info("Preloading parameter recommender models...")
+        get_recommender_models()
+        logger.info("Parameter recommender models loaded")
 
         logger.info("=" * 70)
         logger.info("API Ready to Serve Predictions!")

@@ -12,14 +12,19 @@ from api.schemas import (
     ModelInfoResponse,
     FeatureRangesResponse,
     ErrorResponse,
+    ParameterRecommendationRequest,
+    ParameterRecommendationResponse,
+    ParameterRange,
 )
 from api.dependencies import (
     get_model,
     get_feature_schema,
     get_feature_stats,
     get_model_info,
+    get_recommender_models,
 )
 from src.models.inference import predict_density, validate_input
+from src.models.param_recommender import predict_parameter_ranges
 from src.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -92,6 +97,8 @@ async def predict(
             material=request.material,
             model_version=metadata.get("model_version", "1"),
             warnings=warnings,
+            confidence_interval=metadata.get("confidence_interval"),
+            confidence_level=metadata.get("confidence_level"),
         )
 
         logger.info(f"Prediction successful: {prediction:.2f}% for {request.material}")
@@ -238,4 +245,66 @@ async def feature_ranges(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={"error": "Failed to get feature ranges", "details": str(e)},
+        )
+
+
+@router.post(
+    "/recommend-parameters",
+    response_model=ParameterRecommendationResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+    summary="Recommend process parameters",
+    description="Given material properties, a target density, and printer model, return recommended process parameter ranges.",
+)
+async def recommend_parameters(
+    request: ParameterRecommendationRequest,
+    _recommender=Depends(get_recommender_models),
+) -> ParameterRecommendationResponse:
+    """
+    Recommend process parameter ranges for achieving a target density.
+    """
+    logger.info(
+        f"Recommend-parameters request: material={request.material}, "
+        f"target={request.target_density_pct}%, printer={request.printer_model.value}"
+    )
+
+    try:
+        input_data = {
+            "Melting Point (K)": request.melting_point_k,
+            "Thermal Conductivity (W/mK)": request.thermal_conductivity_w_mk,
+            "Density (g/cm^3)": request.density_g_cm3,
+            "Specific Heat Capacity (J/kgK)": request.specific_heat_j_kgk,
+            "D50 μm": request.d50_um,
+            "RD (%)": request.target_density_pct,
+            "Material": request.material,
+            "Atmosphere": request.atmosphere,
+            "Printer Model": request.printer_model.value,
+        }
+
+        ranges = predict_parameter_ranges(input_data)
+
+        return ParameterRecommendationResponse(
+            laser_power_w=ParameterRange(**ranges["laser_power_w"]),
+            scan_speed_mm_s=ParameterRange(**ranges["scan_speed_mm_s"]),
+            hatch_space_mm=ParameterRange(**ranges["hatch_space_mm"]),
+            layer_thickness_mm=ParameterRange(**ranges["layer_thickness_mm"]),
+            target_density_pct=request.target_density_pct,
+            printer_model=request.printer_model.value,
+            material=request.material,
+        )
+
+    except ValueError as e:
+        logger.error(f"Validation error in recommend-parameters: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Validation error", "details": str(e)},
+        )
+
+    except Exception as e:
+        logger.error(f"Recommend-parameters error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": "Recommendation failed", "details": str(e)},
         )

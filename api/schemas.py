@@ -201,6 +201,72 @@ class PredictionResponse(BaseModel):
         }
 
 
+# ---------------------------------------------------------------------------
+# Parameter recommender schemas
+# ---------------------------------------------------------------------------
+
+class ParameterRecommendationRequest(BaseModel):
+    """Request schema for parameter recommendation"""
+
+    # Material properties
+    melting_point_k: float = Field(..., ge=273.0, le=4000.0, description="Melting point in Kelvin")
+    thermal_conductivity_w_mk: float = Field(..., ge=1.0, le=500.0, description="Thermal conductivity in W/mK")
+    density_g_cm3: float = Field(..., ge=1.0, le=25.0, description="Material density in g/cm³")
+    specific_heat_j_kgk: float = Field(..., ge=100.0, le=2000.0, description="Specific heat capacity in J/kgK")
+    d50_um: float = Field(..., ge=10.0, le=100.0, description="Powder particle size D50 in μm")
+
+    # Categorical
+    material: str = Field(..., description="Material name (e.g., 316L, AlSi10Mg)")
+    atmosphere: str = Field(..., description="Build atmosphere (e.g., Argon, Nitrogen)")
+    printer_model: PrinterModel = Field(..., description="Printer model name")
+
+    # Target
+    target_density_pct: float = Field(
+        ...,
+        ge=90.0,
+        le=100.0,
+        description="Target relative density in percent",
+    )
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "melting_point_k": 1673.0,
+                "thermal_conductivity_w_mk": 16.3,
+                "density_g_cm3": 7.99,
+                "specific_heat_j_kgk": 500.0,
+                "d50_um": 45.0,
+                "material": "316L",
+                "atmosphere": "Argon",
+                "printer_model": "EOS M290",
+                "target_density_pct": 99.0,
+            }
+        }
+
+
+class ParameterRange(BaseModel):
+    """Min/max range for a single process parameter"""
+
+    min: float
+    max: float
+
+
+class ParameterRecommendationResponse(BaseModel):
+    """Response schema for parameter recommendation"""
+
+    laser_power_w: ParameterRange
+    scan_speed_mm_s: ParameterRange
+    hatch_space_mm: ParameterRange
+    layer_thickness_mm: ParameterRange
+    target_density_pct: float
+    printer_model: str
+    material: str
+
+
+# ---------------------------------------------------------------------------
+# Shared schemas
+# ---------------------------------------------------------------------------
+
 class HealthResponse(BaseModel):
     """Response schema for health check"""
 

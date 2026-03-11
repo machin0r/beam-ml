@@ -10,6 +10,7 @@ from src.models.inference import (
     load_schema,
     get_model_info as get_inference_model_info,
 )
+from src.models.param_recommender import load_recommender_models
 from src.data.feature_analysis import load_feature_statistics
 from src.config import PROJECT_ROOT
 from src.logging_config import get_logger
@@ -65,3 +66,14 @@ def get_model_info() -> Dict:
     """
     logger.info("Loading model info for API...")
     return get_inference_model_info()
+
+
+@lru_cache(maxsize=1)
+def get_recommender_models() -> Dict:
+    """
+    Dependency to get the parameter recommender models.
+
+    Cached to load only once per application lifecycle.
+    """
+    logger.info("Loading parameter recommender models for API...")
+    return load_recommender_models()
