@@ -2,9 +2,48 @@
 Pydantic schemas for API request/response validation
 """
 
+import json
+from enum import Enum
+from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
+
+# ---------------------------------------------------------------------------
+# PrinterModel enum — derived from feature_schema.json at import time
+# ---------------------------------------------------------------------------
+
+def _load_printer_models() -> List[str]:
+    """Extract clean printer model names from feature_schema.json."""
+    schema_path = Path(__file__).parent.parent / "models" / "feature_schema.json"
+    with open(schema_path) as f:
+        schema = json.load(f)
+
+    seen: set[str] = set()
+    names: List[str] = []
+    prefix = "Printer Model_"
+    for col in schema["expected_columns"]:
+        if col.startswith(prefix):
+            raw = col[len(prefix):]
+            # Strip non-breaking spaces (\u00a0) and regular whitespace
+            clean = raw.replace("\u00a0", "").strip()
+            if clean and clean not in seen:
+                seen.add(clean)
+                names.append(clean)
+    return sorted(names)
+
+
+PrinterModel = Enum(  # type: ignore[misc]
+    "PrinterModel",
+    {name: name for name in _load_printer_models()},
+    type=str,
+)
+PrinterModel.__doc__ = "Supported LPBF printer models"
+
+
+# ---------------------------------------------------------------------------
+# Prediction schemas
+# ---------------------------------------------------------------------------
 
 class PredictionRequest(BaseModel):
     """Request schema for density prediction"""
@@ -97,7 +136,7 @@ class PredictionRequest(BaseModel):
         ...,
         description="Build atmosphere (e.g., Argon, Nitrogen)",
     )
-    printer_model: str = Field(
+    printer_model: PrinterModel = Field(
         ...,
         description="Printer model name",
         alias="printer_model",
@@ -139,6 +178,14 @@ class PredictionResponse(BaseModel):
     warnings: Optional[List[str]] = Field(
         default=None, description="Any warnings about the prediction"
     )
+    confidence_interval: Optional[List[float]] = Field(
+        default=None,
+        description="80% prediction interval [lower, upper] in percent",
+    )
+    confidence_level: Optional[float] = Field(
+        default=None,
+        description="Confidence level (0.80)",
+    )
 
     class Config:
         json_schema_extra = {
@@ -148,6 +195,8 @@ class PredictionResponse(BaseModel):
                 "material": "316L",
                 "model_version": "1",
                 "warnings": None,
+                "confidence_interval": [96.9, 100.0],
+                "confidence_level": 0.80,
             }
         }
 
