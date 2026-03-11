@@ -239,6 +239,32 @@ class TestPredictionEndpoint:
         ), "Different materials should produce different predictions"
 
 
+class TestPrinterModelsEndpoint:
+    """Test suite for printer models endpoint"""
+
+    def test_printer_models_returns_list(self, client):
+        response = client.get("/api/v1/printer-models")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) > 0
+        assert all(isinstance(m, str) for m in data)
+
+    def test_printer_models_includes_known_models(self, client):
+        response = client.get("/api/v1/printer-models")
+
+        data = response.json()
+        assert "EOS M290" in data
+        assert "Renishaw AM400" in data
+
+    def test_printer_models_is_sorted(self, client):
+        response = client.get("/api/v1/printer-models")
+
+        data = response.json()
+        assert data == sorted(data)
+
+
 class TestParameterRecommenderEndpoint:
     """Test suite for parameter recommender endpoint"""
 
