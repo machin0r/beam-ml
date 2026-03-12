@@ -9,6 +9,7 @@ import pandas as pd
 from pathlib import Path
 
 from src.features.engineering import (
+    compute_derived_features,
     prepare_features_for_training,
     prepare_features_for_inference,
     save_feature_schema,
@@ -30,7 +31,7 @@ def sample_data():
 def training_features(sample_data):
     """Prepare training features from sample data"""
     X_train, expected_columns = prepare_features_for_training(
-        sample_data.head(100),
+        compute_derived_features(sample_data.head(100)),
         numeric_features=NUMERIC_FEATURES,
         categorical_features=CATEGORICAL_FEATURES,
     )
@@ -69,7 +70,7 @@ class TestFeatureEngineering:
 
         # Prepare inference features
         X_inference = prepare_features_for_inference(
-            sample_data.tail(10),
+            compute_derived_features(sample_data.tail(10)),
             expected_columns=expected_columns,
             numeric_features=NUMERIC_FEATURES,
             categorical_features=CATEGORICAL_FEATURES,
@@ -86,7 +87,7 @@ class TestFeatureEngineering:
         _, expected_columns = training_features
 
         # Create test sample with one category
-        test_sample = sample_data.iloc[0:1].copy()
+        test_sample = compute_derived_features(sample_data.iloc[0:1].copy())
 
         X_test = prepare_features_for_inference(
             test_sample,
