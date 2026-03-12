@@ -20,10 +20,10 @@ def register_best_model():
     # Get experiment
     experiment = client.get_experiment_by_name("lpbf_density_prediction")
 
-    # Get best run by R²
+    # Get best run by RMSE (lowest = best)
     runs = client.search_runs(
         experiment_ids=[experiment.experiment_id],
-        order_by=["metrics.r2 DESC"],
+        order_by=["metrics.rmse ASC"],
         max_results=1,
     )
 
