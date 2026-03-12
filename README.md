@@ -7,7 +7,7 @@
 
 **B**uild **E**valuation for **A**dditive **M**anufacturing
 
-Machine learning system for predicting relative density in Laser Powder Bed Fusion (L-PBF) additive manufacturing. Combines process parameters with material thermophysical properties to improve density prediction accuracy.
+Machine learning system for Laser Powder Bed Fusion (L-PBF) additive manufacturing. Predicts relative density from process parameters and material properties, and recommends parameter ranges to hit a target density.
 
 ## Live API
 
@@ -18,6 +18,18 @@ Interactive API documentation with example requests and responses.
 **Quick links:**
 - [Health Check](https://lpbf-api-634665180236.europe-west2.run.app/api/v1/health) - API status
 - [Model Info](https://lpbf-api-634665180236.europe-west2.run.app/api/v1/model-info) - Deployed model details
+- [Printer Models](https://lpbf-api-634665180236.europe-west2.run.app/api/v1/printer-models) - Supported machines
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/predict` | Predict relative density with 80% confidence interval |
+| `POST` | `/api/v1/recommend-parameters` | Recommend process parameter ranges for a target density |
+| `GET` | `/api/v1/printer-models` | List all supported printer models |
+| `GET` | `/api/v1/model-info` | Loaded model details |
+| `GET` | `/api/v1/feature-ranges` | Valid input ranges from training data |
+| `GET` | `/api/v1/health` | Service health check |
 
 ## Quick Start
 
