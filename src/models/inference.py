@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple, Optional
 from functools import lru_cache
 
 from src.features.engineering import (
+    compute_derived_features,
     prepare_features_for_inference,
     load_feature_schema,
     NUMERIC_FEATURES,
@@ -107,6 +108,9 @@ def preprocess_input(
 
     # Convert input to DataFrame
     df = pd.DataFrame([input_data])
+
+    # Compute derived features
+    df = compute_derived_features(df)
 
     # Apply same preprocessing as training
     X = prepare_features_for_inference(

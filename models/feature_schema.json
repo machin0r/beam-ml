@@ -10,6 +10,7 @@
     "Thermal Conductivity (W/mK)",
     "Density (g/cm^3)",
     "Specific Heat Capacity (J/kgK)",
+    "VED (J/mm3)",
     "Material_18Ni300",
     "Material_316L",
     "Material_AlSi10Mg",
@@ -84,7 +85,8 @@
     "Melting Point (K)",
     "Thermal Conductivity (W/mK)",
     "Density (g/cm^3)",
-    "Specific Heat Capacity (J/kgK)"
+    "Specific Heat Capacity (J/kgK)",
+    "VED (J/mm3)"
   ],
   "categorical_features": [
     "Material",
@@ -92,7 +94,7 @@
     "Atmosphere",
     "Printer Model"
   ],
-  "n_features": 73,
-  "n_numeric": 10,
+  "n_features": 74,
+  "n_numeric": 11,
   "n_categorical": 4
 }
