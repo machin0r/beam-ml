@@ -63,20 +63,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="LPBF Density Prediction API",
     description="""
-    Machine learning API for predicting relative density in Laser Powder Bed Fusion (L-PBF)
-    additive manufacturing.
+    Machine learning API for Laser Powder Bed Fusion (L-PBF) additive manufacturing.
 
-    ## Features
-    - **Predict density** based on process parameters and material properties
-    - **Model information** about the currently loaded model
-    - **Feature ranges** showing valid input ranges from training data
-    - **Health check** for monitoring and load balancing
+    ## Endpoints
+    - **POST /predict** — predict relative density from process parameters and material properties, with an 80% confidence interval
+    - **POST /recommend-parameters** — given a material and target density, return recommended process parameter ranges
+    - **GET /printer-models** — list all supported printer models
+    - **GET /model-info** — details about the loaded density model
+    - **GET /feature-ranges** — valid input ranges from training data
+    - **GET /health** — service health check
 
     ## Model
-    The API uses a model trained on the Barrionuevo et al. dataset,
-    enriched with thermophysical material properties.
+    Trained on the Barrionuevo et al. dataset enriched with thermophysical material properties.
+    Supports 48 printer models and returns 80% prediction intervals based on test-set RMSE.
     """,
-    version="0.1.0",
+    version="0.2.0",
     contact={
         "name": "BEAM-ML",
         "url": "https://github.com/machin0r/beam-ml",
