@@ -134,7 +134,7 @@ async def root():
     """Root endpoint with API information"""
     return {
         "message": "LPBF Density Prediction API",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "docs": "/docs",
         "health": "/api/v1/health",
     }
