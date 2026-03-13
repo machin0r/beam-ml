@@ -61,13 +61,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="LPBF Density Prediction API",
+    title="LPBF Parameter Recommendation API",
     description="""
     Machine learning API for Laser Powder Bed Fusion (L-PBF) additive manufacturing.
 
     ## Endpoints
-    - **POST /predict** — predict relative density from process parameters and material properties, with an 80% confidence interval
-    - **POST /recommend-parameters** — given a material and target density, return recommended process parameter ranges
+    - **POST /recommend-parameters** — given a target density, material, and printer model, return a calibrated 80% process window to start your investigation from
+    - **POST /predict** — given a parameter set, return a density estimate with confidence interval; useful for screening out obviously bad combinations
     - **GET /printer-models** — list all supported printer models
     - **GET /model-info** — details about the loaded density model
     - **GET /feature-ranges** — valid input ranges from training data
@@ -75,7 +75,7 @@ app = FastAPI(
 
     ## Model
     Trained on the Barrionuevo et al. dataset enriched with thermophysical material properties.
-    Supports 48 printer models and returns 80% prediction intervals based on test-set RMSE.
+    Supports 48 printer models and returns calibrated 80% prediction intervals.
     """,
     version="0.2.0",
     contact={

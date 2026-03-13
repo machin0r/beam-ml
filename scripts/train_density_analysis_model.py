@@ -25,7 +25,7 @@ def main() -> None:
     mlflow.set_experiment(DENSITY_EXPERIMENT_NAME)
 
     logger.info("Loading data...")
-    X_train, X_test, Y_train, Y_test, expected_columns = load_training_data()
+    X_train, X_test, Y_train, Y_test, expected_columns = load_training_data(min_density=None)
 
     logger.info(f"Training set: {len(X_train)} samples")
     logger.info(f"Test set: {len(X_test)} samples")

@@ -17,9 +17,6 @@
     "Material_CuCrZr",
     "Material_IN718",
     "Material_Ti6Al4V",
-    "Density Measurement Method_Archimedes method",
-    "Density Measurement Method_Image analysis",
-    "Density Measurement Method_Other",
     "Atmosphere_Argon",
     "Atmosphere_NI",
     "Atmosphere_Nitrogen",
@@ -90,11 +87,10 @@
   ],
   "categorical_features": [
     "Material",
-    "Density Measurement Method",
     "Atmosphere",
     "Printer Model"
   ],
-  "n_features": 74,
+  "n_features": 71,
   "n_numeric": 11,
-  "n_categorical": 4
+  "n_categorical": 3
 }
