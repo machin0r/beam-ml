@@ -34,6 +34,25 @@ CATEGORICAL_FEATURES = [
     "Printer Model",
 ]
 
+# Features computed internally from user inputs — not required in API requests
+DERIVED_FEATURES = ["VED (J/mm3)"]
+
+
+def compute_derived_features(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Compute derived features and add them to the dataframe.
+
+    Adds:
+        VED (J/mm3): Volumetric Energy Density = Laser Power / (Scan Speed * Hatch space * Layer thickness)
+    """
+    df = df.copy()
+    df["VED (J/mm3)"] = (
+        df["Laser Power (W)"]
+        / (df["Scan Speed (mm/s)"] * df["Hatch space (mm)"] * df["Layer thickness (mm)"])
+    )
+    logger.info("Computed derived features: VED (J/mm3)")
+    return df
+
 
 def compute_derived_features(df: pd.DataFrame) -> pd.DataFrame:
     """

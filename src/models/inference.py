@@ -15,6 +15,7 @@ from src.features.engineering import (
     load_feature_schema,
     NUMERIC_FEATURES,
     CATEGORICAL_FEATURES,
+    DERIVED_FEATURES,
 )
 from src.config import MLFLOW_TRACKING_URI, PROJECT_ROOT
 from src.logging_config import get_logger
@@ -256,8 +257,10 @@ def validate_input(input_data: Dict[str, float]) -> Tuple[bool, List[str]]:
     """
     errors = []
 
-    # Check required numeric features
+    # Check required numeric features (skip derived features — computed internally)
     for feature in NUMERIC_FEATURES:
+        if feature in DERIVED_FEATURES:
+            continue
         if feature not in input_data:
             errors.append(f"Missing required feature: {feature}")
         elif not isinstance(input_data[feature], (int, float)):
