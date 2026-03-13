@@ -11,14 +11,14 @@ Machine learning system for Laser Powder Bed Fusion (L-PBF) additive manufacturi
 
 ## Live API
 
-**Production endpoint**: https://lpbf-api-634665180236.europe-west2.run.app/docs
+**Production endpoint**: https://beam-ml.machinor.systems/docs
 
 Interactive API documentation with example requests and responses.
 
 **Quick links:**
-- [Health Check](https://lpbf-api-634665180236.europe-west2.run.app/api/v1/health) - API status
-- [Model Info](https://lpbf-api-634665180236.europe-west2.run.app/api/v1/model-info) - Deployed model details
-- [Printer Models](https://lpbf-api-634665180236.europe-west2.run.app/api/v1/printer-models) - Supported machines
+- [Health Check](https://beam-ml.machinor.systems/api/v1/health) - API status
+- [Model Info](https://beam-ml.machinor.systems/api/v1/model-info) - Deployed model details
+- [Printer Models](https://beam-ml.machinor.systems/api/v1/printer-models) - Supported machines
 
 ## API Endpoints
 
