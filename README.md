@@ -7,7 +7,12 @@
 
 **B**uild **E**valuation for **A**dditive **M**anufacturing
 
-Machine learning system for Laser Powder Bed Fusion (L-PBF) additive manufacturing. Predicts relative density from process parameters and material properties, and recommends parameter ranges to hit a target density.
+Machine learning system for Laser Powder Bed Fusion (L-PBF) additive manufacturing.
+
+Two tools in one API:
+
+- **Parameter recommender** - give it a target density, material, and printer model and it returns a calibrated 80% process window to start your experiments from. This is the primary use case.
+- **Density sanity check** - give it a parameter set and it tells you whether those parameters are in a viable density regime. Useful for screening out obviously bad combinations, not for precise density prediction.
 
 ## Live API
 
@@ -24,8 +29,8 @@ Interactive API documentation with example requests and responses.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/predict` | Predict relative density with 80% confidence interval |
-| `POST` | `/api/v1/recommend-parameters` | Recommend process parameter ranges for a target density |
+| `POST` | `/api/v1/recommend-parameters` | Given a target density, material, and printer returns a calibrated 80% process window |
+| `POST` | `/api/v1/predict` | Given a parameter set returns a density estimate with confidence interval as a sanity check |
 | `GET` | `/api/v1/printer-models` | List all supported printer models |
 | `GET` | `/api/v1/model-info` | Loaded model details |
 | `GET` | `/api/v1/feature-ranges` | Valid input ranges from training data |
@@ -79,6 +84,24 @@ mlflow ui
 uv venv && .venv\Scripts\Activate.ps1 && uv pip install -e .
 ```
 
+## Model Performance
+
+### Parameter Recommender
+
+Evaluated on a held-out test set (20%, split by study DOI to prevent data leakage). Coverage is how often the actual parameter used in a successful build falls within the predicted window, the target is 80%.
+
+The recommender is well-calibrated: targeting 80% coverage and achieving 81–83% across all four parameters on a held-out test set.
+
+![Recommender Coverage](reports/figures/recommender_coverage.png)
+
+The recommended windows are material-specific, the model accounts for why different alloys need different parameters, not just that they do.
+
+![Parameter Windows](reports/figures/recommender_windows.png)
+
+### Density Predictor
+
+The density predictor functions as a sanity check, useful for identifying obviously bad parameter combinations but should not be treated as a precise point estimate. The wide confidence interval reflects genuine uncertainty in process-density relationships across the dataset.
+
 ## Limitations
 
 ### Model Scope
@@ -97,13 +120,12 @@ uv venv && .venv\Scripts\Activate.ps1 && uv pip install -e .
 
 ### Known Model Behaviors
 - **Material property dependencies**: Predictions rely on accurate thermophysical properties. Proprietary alloy variations with unlisted compositions may reduce accuracy.
-- **Inter machine variation**: Predictions depend heavily on which machine is selected.
+- **Density predictor precision**: The density predictor is not reliable for discriminating between parameter sets that both produce high-density parts. Use it to screen out bad combinations, not to rank good ones.
 
 ### Recommended Use
-This model is best suited for:
-- Initial parameter screening and design of experiments
-- Comparative analysis of parameter sets
-- Educational demonstrations of ML in additive manufacturing
+- **Starting a parameter study**: Use the recommender to get a process window, then refine experimentally.
+- **Screening parameter sets**: Use the density predictor to check whether a combination is in a viable regime before committing to a build.
+- Not a substitute for experimental validation.
 
 ## Data Provenance
 
