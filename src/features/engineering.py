@@ -29,7 +29,6 @@ NUMERIC_FEATURES = [
 
 CATEGORICAL_FEATURES = [
     "Material",
-    "Density Measurement Method",
     "Atmosphere",
     "Printer Model",
 ]

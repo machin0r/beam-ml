@@ -1,4 +1,4 @@
-artifact_path: file:///C:/Users/micha/Documents/Coding/lpbf-ml-system/mlruns/551197278209507480/models/m-30dc87d3fb7f4dd9b8a1a4774927cee5/artifacts
+artifact_path: file:///C:/Users/micha/Documents/Coding/lpbf-ml-system/mlruns/551197278209507480/models/m-da4be5e8401549e4be1b24fb51b5087c/artifacts
 flavors:
   python_function:
     env:
@@ -14,9 +14,9 @@ flavors:
     serialization_format: cloudpickle
     sklearn_version: 1.8.0
 mlflow_version: 3.8.1
-model_id: m-30dc87d3fb7f4dd9b8a1a4774927cee5
-model_size_bytes: 124503
-model_uuid: m-30dc87d3fb7f4dd9b8a1a4774927cee5
+model_id: m-da4be5e8401549e4be1b24fb51b5087c
+model_size_bytes: 211151
+model_uuid: m-da4be5e8401549e4be1b24fb51b5087c
 prompts: null
-run_id: a15ba7663dd643749d98d783511c767d
-utc_time_created: '2026-03-12 16:14:35.126085'
+run_id: 7488626c58064267a5e31519e914835a
+utc_time_created: '2026-03-13 12:18:09.435965'
