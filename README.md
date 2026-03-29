@@ -9,6 +9,8 @@
 
 Machine learning system for Laser Powder Bed Fusion (L-PBF) additive manufacturing.
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Open-64ffda)](https://beam-ml.machinor.systems/)
+
 Two tools in one API:
 
 - **Parameter recommender** - give it a target density, material, and printer model and it returns a calibrated 80% process window to start your experiments from. This is the primary use case.
